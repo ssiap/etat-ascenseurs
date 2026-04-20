@@ -1,0 +1,328 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Ascenseurs — Centre Hospitalier</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f6fa;
+            --surface: #ffffff;
+            --surface2: #f0f1f5;
+            --border: #e2e4ec;
+            --text: #1a1d27;
+            --text-muted: #6b7080;
+            --green: #16a34a;
+            --green-bg: #f0fdf4;
+            --green-text: #15803d;
+            --green-border: #bbf7d0;
+            --red: #dc2626;
+            --red-bg: #fff5f5;
+            --red-text: #b91c1c;
+            --red-border: #fecaca;
+            --yellow: #d97706;
+            --yellow-bg: #fffbeb;
+            --yellow-text: #b45309;
+            --yellow-border: #fde68a;
+            --orange: #ea580c;
+            --orange-bg: #fff7ed;
+            --orange-text: #c2410c;
+            --orange-border: #fed7aa;
+            --accent: #4f46e5;
+            --accent-light: #eef2ff;
+        }
+
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+
+        body {
+            font-family: 'DM Sans', sans-serif;
+            background: var(--bg);
+            color: var(--text);
+            min-height: 100vh;
+        }
+
+        header {
+            background: var(--surface);
+            border-bottom: 1px solid var(--border);
+            padding: 20px 32px;
+            display: flex;
+            align-items: center;
+            justify-content: space-between;
+            gap: 16px;
+            flex-wrap: wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+
+        .header-left h1 { font-size: 1.2rem; font-weight: 600; letter-spacing: -0.02em; }
+        .header-left p { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; font-family: 'DM Mono', monospace; }
+
+        #stat-total {
+            font-size: 0.8rem; color: var(--text-muted);
+            background: var(--surface2); padding: 5px 14px;
+            border-radius: 999px; border: 1px solid var(--border); font-weight: 500;
+        }
+
+        .stats-bar {
+            display: flex; gap: 10px; padding: 16px 32px;
+            border-bottom: 1px solid var(--border); flex-wrap: wrap;
+            background: var(--surface);
+        }
+
+        .stat-pill {
+            display: flex; align-items: center; gap: 8px;
+            padding: 7px 16px; border-radius: 999px;
+            font-size: 0.8rem; font-weight: 500; border: 1px solid transparent;
+        }
+        .stat-pill .dot { width: 8px; height: 8px; border-radius: 50%; flex-shrink: 0; }
+        .stat-pill.s-green  { background: var(--green-bg);  border-color: var(--green-border);  color: var(--green-text); }
+        .stat-pill.s-green  .dot { background: var(--green); }
+        .stat-pill.s-red    { background: var(--red-bg);    border-color: var(--red-border);    color: var(--red-text); }
+        .stat-pill.s-red    .dot { background: var(--red); }
+        .stat-pill.s-yellow { background: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow-text); }
+        .stat-pill.s-yellow .dot { background: var(--yellow); }
+        .stat-pill.s-orange { background: var(--orange-bg); border-color: var(--orange-border); color: var(--orange-text); }
+        .stat-pill.s-orange .dot { background: var(--orange); }
+
+        .filters {
+            padding: 14px 32px; display: flex; gap: 8px;
+            align-items: center; flex-wrap: wrap;
+            background: var(--surface); border-bottom: 1px solid var(--border);
+        }
+
+        .filter-label { font-size: 0.75rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; margin-right: 4px; }
+
+        .filter-btn {
+            padding: 6px 14px; border-radius: 7px; border: 1px solid var(--border);
+            background: var(--surface2); color: var(--text-muted);
+            font-size: 0.8rem; cursor: pointer; font-family: 'DM Sans', sans-serif;
+            font-weight: 500; transition: all 0.15s;
+        }
+        .filter-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+        .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+
+        .search-box {
+            margin-left: auto; padding: 6px 14px; border-radius: 7px;
+            border: 1px solid var(--border); background: var(--surface2);
+            color: var(--text); font-size: 0.8rem; font-family: 'DM Sans', sans-serif;
+            width: 220px; outline: none; transition: border-color 0.15s, box-shadow 0.15s;
+        }
+        .search-box:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+        .search-box::placeholder { color: var(--text-muted); }
+
+        .table-wrap { padding: 20px 32px 48px; overflow-x: auto; }
+
+        table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            font-size: 0.85rem; background: var(--surface);
+            border-radius: 12px; border: 1px solid var(--border);
+            overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        }
+
+        thead th {
+            background: var(--surface2); color: var(--text-muted);
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.07em; padding: 11px 16px; text-align: left;
+            border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #fafbff; }
+        tbody td { padding: 11px 16px; vertical-align: middle; }
+
+        .td-appareil { font-weight: 500; white-space: nowrap; }
+        .td-ref { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text-muted); }
+        .td-bat { font-size: 0.82rem; }
+        .td-date { font-family: 'DM Mono', monospace; font-size: 0.78rem; color: var(--text-muted); white-space: nowrap; }
+        .td-precision { font-size: 0.8rem; color: var(--text-muted); max-width: 280px; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px;
+            padding: 4px 10px; border-radius: 6px; font-size: 0.75rem;
+            font-weight: 600; white-space: nowrap; border: 1px solid transparent;
+        }
+        .badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .badge-green  { background: var(--green-bg);  color: var(--green-text);  border-color: var(--green-border); }
+        .badge-green  .dot { background: var(--green); }
+        .badge-red    { background: var(--red-bg);    color: var(--red-text);    border-color: var(--red-border); }
+        .badge-red    .dot { background: var(--red); animation: pulse 1.5s infinite; }
+        .badge-orange { background: var(--orange-bg); color: var(--orange-text); border-color: var(--orange-border); }
+        .badge-orange .dot { background: var(--orange); }
+
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+        .tag-oui {
+            display: inline-block; padding: 3px 9px; border-radius: 5px;
+            font-size: 0.72rem; font-weight: 600;
+            background: var(--yellow-bg); color: var(--yellow-text); border: 1px solid var(--yellow-border);
+        }
+
+        .no-result { text-align: center; color: var(--text-muted); padding: 56px; font-size: 0.9rem; }
+
+        @media (max-width: 768px) {
+            header, .stats-bar, .filters, .table-wrap { padding-left: 16px; padding-right: 16px; }
+            .search-box { width: 100%; margin-left: 0; }
+        }
+    </style>
+</head>
+<body>
+
+<header>
+    <div class="header-left">
+        <h1>🏥 Suivi des Ascenseurs — Centre Hospitalier</h1>
+        <p id="last-update">Chargement…</p>
+    </div>
+    <span id="stat-total"></span>
+</header>
+
+<div class="stats-bar" id="stats-bar"></div>
+
+<div class="filters">
+    <span class="filter-label">Filtrer :</span>
+    <button class="filter-btn active" onclick="setFilter('tous',this)">Tous</button>
+    <button class="filter-btn" onclick="setFilter('en-service',this)">En service</button>
+    <button class="filter-btn" onclick="setFilter('arret',this)">Arrêt</button>
+    <button class="filter-btn" onclick="setFilter('prestataire',this)">Appel prestataire</button>
+    <button class="filter-btn" onclick="setFilter('piece',this)">Pièce en commande</button>
+    <input class="search-box" type="text" placeholder="🔍  Rechercher…" oninput="setSearch(this.value)">
+</div>
+
+<div class="table-wrap">
+    <table>
+        <thead>
+            <tr>
+                <th>Appareil</th><th>Réf.</th><th>Bâtiment</th><th>Dernière date</th>
+                <th>État</th><th>Pièce cmd.</th><th>Réglage</th><th>Précisions</th>
+            </tr>
+        </thead>
+        <tbody id="tbody"></tbody>
+    </table>
+    <div class="no-result" id="no-result" style="display:none">Aucun résultat trouvé.</div>
+</div>
+
+<script>
+const ascenseurs = [
+    { appareil:"Ascenseur A (grand)",  ref:"IPH56", batiment:"Psychiatrie",      date:"12 mars, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur A1",         ref:"IPH57", batiment:"Action 1",          date:"14 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur A2",         ref:"IPH58", batiment:"Action 2",          date:"26 déc., 2025",   etat:"en-service",  piece:"Oui", reglage:"",    precision:"Fonctionne, mais bouton en commande (plastron)" },
+    { appareil:"Ascenseur B (petit)",  ref:"IPH59", batiment:"Psychiatrie",       date:"8 avril, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur C",          ref:"IPH60", batiment:"Psychiatrie",       date:"20 avril, 2026",  etat:"en-service",  piece:"Non", reglage:"Non", precision:"Agent SSIAP à récupérer les clefs" },
+    { appareil:"Ascenseur D",          ref:"IPH61", batiment:"Direction",         date:"8 avril, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur E",          ref:"IPH62", batiment:"Ex.MG2",            date:"5 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur F",          ref:"IPH63", batiment:"Ex.MG2",            date:"7 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur G",          ref:"IPH64", batiment:"Ouest",             date:"3 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur H",          ref:"IPH65", batiment:"Plateau technique", date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur I",          ref:"IPH66", batiment:"Phase 200",         date:"26 mai, 2025",    etat:"en-service",  piece:"",    reglage:"",    precision:"Référencé en service sur le site eOtisline" },
+    { appareil:"Ascenseur J",          ref:"IPH67", batiment:"Phase 200",         date:"29 août, 2025",   etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur K",          ref:"IPH68", batiment:"Plateau technique", date:"13 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur L",          ref:"IPH69", batiment:"Plateau technique", date:"19 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"Asc bloqué porte ouverte niv 1" },
+    { appareil:"Ascenseur M",          ref:"IPH70", batiment:"Plateau technique", date:"2 avril, 2026",   etat:"arret",       piece:"",    reglage:"Oui", precision:"Fin des travaux ce jour. Vu avec M. Dufau, la réception de l'appareil se fera en présence de Monsieur Canberra" },
+    { appareil:"Ascenseur N",          ref:"IPH71", batiment:"Plateau technique", date:"13 fév., 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur O",          ref:"IPH72", batiment:"Phase 200",         date:"21 fév., 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"Actualisation avec le technicien. Aucune pièce en commande. L'appareil fonctionne." },
+    { appareil:"Ascenseur P",          ref:"IPH73", batiment:"Phase 200",         date:"13 janv., 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"ok" },
+    { appareil:"Ascenseur Q (grand)",  ref:"IPH74", batiment:"Action 2",          date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur R (petit)",  ref:"IPH75", batiment:"Action 2",          date:"30 déc., 2025",   etat:"en-service",  piece:"Oui", reglage:"",    precision:"Bouton pallier remit, manque l'anneau de fixation" },
+    { appareil:"Ascenseur T",          ref:"IPH77", batiment:"Phase 100",         date:"2 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur V",          ref:"IPH79", batiment:"Phase 100",         date:"19 avril, 2026",  etat:"arret",       piece:"Oui", reglage:"Oui", precision:"Courroie à changer" },
+    { appareil:"Ascenseur W",          ref:"IPH80", batiment:"Phase 100",         date:"5 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur X",          ref:"IPH81", batiment:"Plateau technique", date:"31 janv., 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"Coulisseaux sous cabine graissé" },
+    { appareil:"Ascenseur Y",          ref:"IPH82", batiment:"Phase 200",         date:"20 août, 2025",   etat:"en-service",  piece:"",    reglage:"",    precision:"Synthèse vocale désactivée" },
+    { appareil:"Ascenseur Z",          ref:"IPH83", batiment:"Reposoir",          date:"28 juil., 2025",  etat:"en-service",  piece:"",    reglage:"",    precision:"Vous allez recevoir une offre pour le remplacement des 4 contacts à clefs" },
+    { appareil:"Ascenseur 4",          ref:"IPH51", batiment:"EHPAD BLF",         date:"17 avril, 2026",  etat:"arret",       piece:"",    reglage:"",    precision:"Carte en commande" },
+    { appareil:"Ascenseur 5",          ref:"IPH52", batiment:"EHPAD BLF",         date:"13 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur 6",          ref:"IPH53", batiment:"EHPAD BLF",         date:"18 mars, 2026",   etat:"en-service",  piece:"Oui", reglage:"Oui", precision:"En attente de Koné" },
+    { appareil:"Ascenseur 7",          ref:"IPH54", batiment:"USP",               date:"19 fév., 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"Remis en service" },
+    { appareil:"Ascenseur 8",          ref:"IPH55", batiment:"USP",               date:"12 janv., 2026",  etat:"en-service",  piece:"Oui", reglage:"",    precision:"Devis en cours pour lumière intérieure" },
+    { appareil:"Ascenseur 2 (grand)",  ref:"IPH49", batiment:"EHPAD Thiers",      date:"22 mars, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Ascenseur 3 (petit)",  ref:"IPH50", batiment:"EHPAD Thiers",      date:"3 avril, 2026",   etat:"prestataire", piece:"",    reglage:"",    precision:"Patiente retrouvée encore au -1 sous-sol" },
+    { appareil:"Monte-Charge 1",       ref:"IPH48", batiment:"EHPAD Thiers",      date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Monte-Charge S",       ref:"IPH76", batiment:"Psychiatrie",       date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"" },
+    { appareil:"Monte-Charge U",       ref:"IPH78", batiment:"Phase 100",         date:"18 mars, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"Erreur appareil en service" },
+    { appareil:"Ascenseur IP2",        ref:"44836647", batiment:"IP2",            date:"17 déc., 2024",   etat:"en-service",  piece:"",    reglage:"",    precision:"⚠️ Appareil sous garantie Koné jusqu'en janvier 2027" },
+];
+
+let currentFilter = 'tous';
+let currentSearch = '';
+
+function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+}
+
+function setSearch(v) {
+    currentSearch = v.toLowerCase();
+    render();
+}
+
+function getFilteredData() {
+    return ascenseurs.filter(a => {
+        const matchFilter =
+            currentFilter === 'tous'        ? true :
+            currentFilter === 'en-service'  ? a.etat === 'en-service' :
+            currentFilter === 'arret'       ? a.etat === 'arret' :
+            currentFilter === 'prestataire' ? a.etat === 'prestataire' :
+            currentFilter === 'piece'       ? a.piece === 'Oui' : true;
+        const matchSearch = currentSearch === '' ? true :
+            a.appareil.toLowerCase().includes(currentSearch) ||
+            a.ref.toLowerCase().includes(currentSearch) ||
+            a.batiment.toLowerCase().includes(currentSearch) ||
+            a.precision.toLowerCase().includes(currentSearch);
+        return matchFilter && matchSearch;
+    });
+}
+
+function badgeHtml(etat) {
+    const map = {
+        'en-service':  ['badge-green',  'En service'],
+        'arret':       ['badge-red',    "Laissé à l'arrêt"],
+        'prestataire': ['badge-orange', 'Appel prestataire'],
+    };
+    const [cls, label] = map[etat] || ['badge-yellow', etat];
+    return `<span class="badge ${cls}"><span class="dot"></span>${label}</span>`;
+}
+
+function render() {
+    const data = getFilteredData();
+    const tbody = document.getElementById('tbody');
+    const noResult = document.getElementById('no-result');
+    if (data.length === 0) { tbody.innerHTML = ''; noResult.style.display = 'block'; return; }
+    noResult.style.display = 'none';
+    tbody.innerHTML = data.map(a => `
+        <tr>
+            <td class="td-appareil">${a.appareil}</td>
+            <td class="td-ref">${a.ref}</td>
+            <td class="td-bat">${a.batiment}</td>
+            <td class="td-date">${a.date || '—'}</td>
+            <td>${badgeHtml(a.etat)}</td>
+            <td>${a.piece === 'Oui' ? '<span class="tag-oui">Oui</span>' : a.piece === 'Non' ? '<span style="color:var(--text-muted);font-size:0.78rem">Non</span>' : '—'}</td>
+            <td>${a.reglage === 'Oui' ? '<span class="tag-oui">Oui</span>' : a.reglage === 'Non' ? '<span style="color:var(--text-muted);font-size:0.78rem">Non</span>' : '—'}</td>
+            <td class="td-precision">${a.precision || ''}</td>
+        </tr>
+    `).join('');
+}
+
+function renderStats() {
+    const enService   = ascenseurs.filter(a => a.etat === 'en-service').length;
+    const arret       = ascenseurs.filter(a => a.etat === 'arret').length;
+    const prestataire = ascenseurs.filter(a => a.etat === 'prestataire').length;
+    const piece       = ascenseurs.filter(a => a.piece === 'Oui').length;
+    document.getElementById('stats-bar').innerHTML = `
+        <span class="stat-pill s-green"><span class="dot"></span>En service : <strong>${enService}</strong></span>
+        <span class="stat-pill s-red"><span class="dot"></span>À l'arrêt : <strong>${arret}</strong></span>
+        <span class="stat-pill s-orange"><span class="dot"></span>Appel prestataire : <strong>${prestataire}</strong></span>
+        <span class="stat-pill s-yellow"><span class="dot"></span>Pièce en commande : <strong>${piece}</strong></span>
+    `;
+    document.getElementById('stat-total').textContent = `${ascenseurs.length} appareils`;
+    const now = new Date();
+    document.getElementById('last-update').textContent =
+        'Mis à jour : ' + now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+renderStats();
+render();
+</script>
+</body>
+</html>
