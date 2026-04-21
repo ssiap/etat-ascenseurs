@@ -1,0 +1,741 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Suivi Ascenseurs — Centre Hospitalier</title>
+    <link href="https://fonts.googleapis.com/css2?family=DM+Sans:wght@300;400;500;600;700&family=DM+Mono:wght@400;500&display=swap" rel="stylesheet">
+    <style>
+        :root {
+            --bg: #f5f6fa; --surface: #ffffff; --surface2: #f0f1f5; --border: #e2e4ec;
+            --text: #1a1d27; --text-muted: #6b7080;
+            --green: #16a34a; --green-bg: #f0fdf4; --green-text: #15803d; --green-border: #bbf7d0;
+            --red: #dc2626; --red-bg: #fff5f5; --red-text: #b91c1c; --red-border: #fecaca;
+            --yellow: #d97706; --yellow-bg: #fffbeb; --yellow-text: #b45309; --yellow-border: #fde68a;
+            --orange: #ea580c; --orange-bg: #fff7ed; --orange-text: #c2410c; --orange-border: #fed7aa;
+            --blue: #2563eb; --blue-bg: #eff6ff; --blue-text: #1d4ed8; --blue-border: #bfdbfe;
+            --accent: #4f46e5; --accent-light: #eef2ff;
+        }
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body { font-family: 'DM Sans', sans-serif; background: var(--bg); color: var(--text); min-height: 100vh; }
+
+        /* ===== LOGIN ===== */
+        #login-page {
+            min-height: 100vh; display: flex; align-items: center; justify-content: center;
+            background: linear-gradient(135deg, #1e1b4b 0%, #312e81 50%, #4338ca 100%);
+            padding: 24px;
+        }
+        .login-card {
+            background: white; border-radius: 20px; padding: 36px 32px;
+            width: 100%; max-width: 440px;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.3);
+        }
+        .login-logo { text-align: center; margin-bottom: 24px; }
+        .login-logo .icon { font-size: 2.8rem; display: block; margin-bottom: 6px; }
+        .login-logo h1 { font-size: 1.15rem; font-weight: 700; color: var(--text); }
+        .login-logo p { font-size: 0.78rem; color: var(--text-muted); margin-top: 3px; }
+
+        /* Tabs */
+        .login-tabs { display: flex; gap: 0; margin-bottom: 24px; border: 1px solid var(--border); border-radius: 10px; overflow: hidden; }
+        .login-tab {
+            flex: 1; padding: 10px; text-align: center; cursor: pointer;
+            font-size: 0.82rem; font-weight: 600; background: var(--surface2);
+            color: var(--text-muted); border: none; font-family: 'DM Sans', sans-serif;
+            transition: all 0.15s;
+        }
+        .login-tab.active { background: var(--accent); color: white; }
+
+        .tab-panel { display: none; }
+        .tab-panel.active { display: block; }
+
+        /* Agent panel */
+        .agent-list {
+            max-height: 220px; overflow-y: auto; border: 1.5px solid var(--border);
+            border-radius: 10px; margin-bottom: 12px;
+        }
+        .agent-item {
+            padding: 10px 14px; cursor: pointer; border-bottom: 1px solid var(--border);
+            font-size: 0.85rem; transition: background 0.1s; display: flex; align-items: center; gap: 10px;
+        }
+        .agent-item:last-child { border-bottom: none; }
+        .agent-item:hover { background: var(--accent-light); }
+        .agent-item.selected { background: var(--accent-light); font-weight: 600; color: var(--accent); }
+        .agent-item .agent-avatar {
+            width: 30px; height: 30px; border-radius: 50%; background: var(--accent-light);
+            color: var(--accent); font-size: 0.7rem; font-weight: 700;
+            display: flex; align-items: center; justify-content: center; flex-shrink: 0;
+        }
+
+        /* Hierarchy panel */
+        .role-grid { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 16px; }
+        .role-btn {
+            padding: 14px 10px; border-radius: 12px; border: 2px solid var(--border);
+            background: var(--surface2); cursor: pointer; text-align: center;
+            transition: all 0.15s; font-family: 'DM Sans', sans-serif;
+        }
+        .role-btn:hover { border-color: var(--accent); background: var(--accent-light); }
+        .role-btn.selected { border-color: var(--accent); background: var(--accent-light); }
+        .role-btn .role-icon { font-size: 1.5rem; display: block; margin-bottom: 4px; }
+        .role-btn .role-name { font-size: 0.76rem; font-weight: 600; color: var(--text); }
+
+        .login-input {
+            width: 100%; padding: 11px 14px; border-radius: 10px;
+            border: 1.5px solid var(--border); background: var(--surface2);
+            font-family: 'DM Sans', sans-serif; font-size: 0.92rem; color: var(--text);
+            outline: none; transition: border-color 0.15s; margin-bottom: 10px; letter-spacing: 0.1em;
+        }
+        .login-input:focus { border-color: var(--accent); box-shadow: 0 0 0 3px rgba(79,70,229,0.1); }
+
+        .login-btn {
+            width: 100%; padding: 12px; border-radius: 10px; border: none;
+            background: var(--accent); color: white; font-family: 'DM Sans', sans-serif;
+            font-size: 0.92rem; font-weight: 600; cursor: pointer; transition: all 0.15s;
+        }
+        .login-btn:hover { background: #4338ca; transform: translateY(-1px); }
+
+        .login-error {
+            background: var(--red-bg); color: var(--red-text); border: 1px solid var(--red-border);
+            padding: 9px 14px; border-radius: 8px; font-size: 0.8rem;
+            margin-bottom: 10px; display: none;
+        }
+
+        /* ===== APP ===== */
+        #app { display: none; }
+
+        header {
+            background: var(--surface); border-bottom: 1px solid var(--border);
+            padding: 16px 32px; display: flex; align-items: center;
+            justify-content: space-between; gap: 16px; flex-wrap: wrap;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.05);
+        }
+        .header-left h1 { font-size: 1.1rem; font-weight: 700; letter-spacing: -0.02em; }
+        .header-left p { font-size: 0.75rem; color: var(--text-muted); margin-top: 2px; font-family: 'DM Mono', monospace; }
+        .header-right { display: flex; align-items: center; gap: 10px; flex-wrap: wrap; }
+
+        .user-badge {
+            display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+            border-radius: 999px; background: var(--accent-light);
+            border: 1px solid #c7d2fe; font-size: 0.8rem; font-weight: 600; color: var(--accent);
+        }
+        .logout-btn {
+            padding: 6px 14px; border-radius: 8px; border: 1px solid var(--border);
+            background: transparent; color: var(--text-muted); font-size: 0.8rem;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; transition: all 0.15s;
+        }
+        .logout-btn:hover { border-color: var(--red); color: var(--red); }
+
+        .stats-bar {
+            display: flex; gap: 10px; padding: 14px 32px;
+            border-bottom: 1px solid var(--border); flex-wrap: wrap; background: var(--surface);
+        }
+        .stat-pill {
+            display: flex; align-items: center; gap: 8px; padding: 6px 14px;
+            border-radius: 999px; font-size: 0.78rem; font-weight: 500; border: 1px solid transparent;
+        }
+        .stat-pill .dot { width: 7px; height: 7px; border-radius: 50%; flex-shrink: 0; }
+        .stat-pill.s-green  { background: var(--green-bg);  border-color: var(--green-border);  color: var(--green-text); }
+        .stat-pill.s-green  .dot { background: var(--green); }
+        .stat-pill.s-red    { background: var(--red-bg);    border-color: var(--red-border);    color: var(--red-text); }
+        .stat-pill.s-red    .dot { background: var(--red); }
+        .stat-pill.s-yellow { background: var(--yellow-bg); border-color: var(--yellow-border); color: var(--yellow-text); }
+        .stat-pill.s-yellow .dot { background: var(--yellow); }
+        .stat-pill.s-orange { background: var(--orange-bg); border-color: var(--orange-border); color: var(--orange-text); }
+        .stat-pill.s-orange .dot { background: var(--orange); }
+
+        .filters {
+            padding: 12px 32px; display: flex; gap: 8px; align-items: center;
+            flex-wrap: wrap; background: var(--surface); border-bottom: 1px solid var(--border);
+        }
+        .filter-label { font-size: 0.72rem; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.08em; }
+        .filter-btn {
+            padding: 5px 12px; border-radius: 7px; border: 1px solid var(--border);
+            background: var(--surface2); color: var(--text-muted); font-size: 0.78rem;
+            cursor: pointer; font-family: 'DM Sans', sans-serif; font-weight: 500; transition: all 0.15s;
+        }
+        .filter-btn:hover { border-color: var(--accent); color: var(--accent); background: var(--accent-light); }
+        .filter-btn.active { background: var(--accent); border-color: var(--accent); color: #fff; }
+        .search-box {
+            margin-left: auto; padding: 6px 12px; border-radius: 7px;
+            border: 1px solid var(--border); background: var(--surface2); color: var(--text);
+            font-size: 0.78rem; font-family: 'DM Sans', sans-serif; width: 200px;
+            outline: none; transition: border-color 0.15s;
+        }
+        .search-box:focus { border-color: var(--accent); }
+        .search-box::placeholder { color: var(--text-muted); }
+
+        .table-wrap { padding: 20px 32px 48px; overflow-x: auto; }
+        table {
+            width: 100%; border-collapse: separate; border-spacing: 0;
+            font-size: 0.84rem; background: var(--surface);
+            border-radius: 12px; border: 1px solid var(--border);
+            overflow: hidden; box-shadow: 0 1px 6px rgba(0,0,0,0.05);
+        }
+        thead th {
+            background: var(--surface2); color: var(--text-muted); font-size: 0.7rem;
+            font-weight: 600; text-transform: uppercase; letter-spacing: 0.07em;
+            padding: 10px 14px; text-align: left; border-bottom: 1px solid var(--border); white-space: nowrap;
+        }
+        tbody tr { border-bottom: 1px solid var(--border); transition: background 0.1s; cursor: pointer; }
+        tbody tr:last-child { border-bottom: none; }
+        tbody tr:hover { background: #f5f3ff; }
+        tbody td { padding: 10px 14px; vertical-align: middle; }
+        .td-appareil { font-weight: 600; white-space: nowrap; }
+        .td-ref { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text-muted); }
+        .td-date { font-family: 'DM Mono', monospace; font-size: 0.75rem; color: var(--text-muted); white-space: nowrap; }
+        .td-precision { font-size: 0.78rem; color: var(--text-muted); max-width: 240px; }
+
+        .badge {
+            display: inline-flex; align-items: center; gap: 5px; padding: 3px 9px;
+            border-radius: 6px; font-size: 0.72rem; font-weight: 600;
+            white-space: nowrap; border: 1px solid transparent;
+        }
+        .badge .dot { width: 6px; height: 6px; border-radius: 50%; flex-shrink: 0; }
+        .badge-green  { background: var(--green-bg);  color: var(--green-text);  border-color: var(--green-border); }
+        .badge-green  .dot { background: var(--green); }
+        .badge-red    { background: var(--red-bg);    color: var(--red-text);    border-color: var(--red-border); }
+        .badge-red    .dot { background: var(--red); animation: pulse 1.5s infinite; }
+        .badge-orange { background: var(--orange-bg); color: var(--orange-text); border-color: var(--orange-border); }
+        .badge-orange .dot { background: var(--orange); }
+        .badge-blue   { background: var(--blue-bg);   color: var(--blue-text);   border-color: var(--blue-border); }
+        .badge-blue   .dot { background: var(--blue); }
+        @keyframes pulse { 0%,100%{opacity:1} 50%{opacity:0.2} }
+
+        .tag-oui {
+            display: inline-block; padding: 2px 8px; border-radius: 4px; font-size: 0.7rem;
+            font-weight: 600; background: var(--yellow-bg); color: var(--yellow-text); border: 1px solid var(--yellow-border);
+        }
+        .no-result { text-align: center; color: var(--text-muted); padding: 48px; font-size: 0.9rem; }
+
+        /* ===== MODAL ===== */
+        .modal-overlay {
+            position: fixed; inset: 0; background: rgba(0,0,0,0.5);
+            display: flex; align-items: center; justify-content: center;
+            z-index: 100; padding: 16px; backdrop-filter: blur(4px);
+        }
+        .modal {
+            background: white; border-radius: 16px; width: 100%; max-width: 680px;
+            max-height: 90vh; overflow-y: auto;
+            box-shadow: 0 24px 60px rgba(0,0,0,0.2);
+        }
+        .modal-header {
+            padding: 20px 24px 16px; border-bottom: 1px solid var(--border);
+            display: flex; align-items: flex-start; justify-content: space-between; gap: 12px;
+            position: sticky; top: 0; background: white; z-index: 1; border-radius: 16px 16px 0 0;
+        }
+        .modal-header h2 { font-size: 1.05rem; font-weight: 700; }
+        .modal-header p { font-size: 0.8rem; color: var(--text-muted); margin-top: 4px; }
+        .modal-close {
+            width: 32px; height: 32px; border-radius: 8px; border: 1px solid var(--border);
+            background: var(--surface2); cursor: pointer; font-size: 1.1rem; flex-shrink: 0;
+            display: flex; align-items: center; justify-content: center; transition: all 0.15s;
+        }
+        .modal-close:hover { background: var(--red-bg); border-color: var(--red-border); color: var(--red); }
+        .modal-body { padding: 20px 24px; }
+
+        .history-title {
+            font-size: 0.72rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.08em; color: var(--text-muted); margin-bottom: 12px;
+        }
+        .history-item {
+            display: grid; grid-template-columns: auto 1fr auto; gap: 12px;
+            padding: 12px 0; border-bottom: 1px solid var(--border); align-items: start;
+        }
+        .history-item:last-child { border-bottom: none; }
+        .history-dot { width: 10px; height: 10px; border-radius: 50%; margin-top: 5px; flex-shrink: 0; }
+        .history-dot.green { background: var(--green); }
+        .history-dot.red { background: var(--red); }
+        .history-dot.orange { background: var(--orange); }
+        .history-dot.blue { background: var(--blue); }
+        .history-info .agent { font-weight: 600; font-size: 0.85rem; display: flex; align-items: center; gap: 8px; flex-wrap: wrap; }
+        .history-info .precision { font-size: 0.8rem; color: var(--text-muted); margin-top: 3px; }
+        .history-meta { text-align: right; }
+        .history-meta .date { font-family: 'DM Mono', monospace; font-size: 0.72rem; color: var(--text-muted); }
+        .history-meta .heure { font-family: 'DM Mono', monospace; font-size: 0.7rem; color: var(--text-muted); }
+
+        .add-form {
+            background: var(--surface2); border-radius: 12px; padding: 16px;
+            margin-top: 20px; border: 1px solid var(--border);
+        }
+        .add-form-title {
+            font-size: 0.78rem; font-weight: 600; text-transform: uppercase;
+            letter-spacing: 0.07em; color: var(--accent); margin-bottom: 14px;
+        }
+        .form-row { display: grid; grid-template-columns: 1fr 1fr; gap: 10px; margin-bottom: 10px; }
+        .form-group { display: flex; flex-direction: column; gap: 4px; }
+        .form-group label { font-size: 0.7rem; font-weight: 600; color: var(--text-muted); text-transform: uppercase; letter-spacing: 0.06em; }
+        .form-input, .form-select, .form-textarea {
+            padding: 8px 12px; border-radius: 8px; border: 1px solid var(--border);
+            background: white; font-family: 'DM Sans', sans-serif; font-size: 0.83rem;
+            color: var(--text); outline: none; transition: border-color 0.15s;
+        }
+        .form-input:focus, .form-select:focus, .form-textarea:focus { border-color: var(--accent); }
+        .form-textarea { resize: vertical; min-height: 60px; }
+        .form-submit {
+            width: 100%; padding: 10px; border-radius: 8px; border: none;
+            background: var(--accent); color: white; font-family: 'DM Sans', sans-serif;
+            font-size: 0.85rem; font-weight: 600; cursor: pointer; margin-top: 6px; transition: all 0.15s;
+        }
+        .form-submit:hover { background: #4338ca; }
+
+        .readonly-notice {
+            text-align: center; padding: 16px; margin-top: 16px;
+            background: var(--surface2); border-radius: 10px; border: 1px solid var(--border);
+            font-size: 0.82rem; color: var(--text-muted);
+        }
+
+        @media (max-width: 768px) {
+            header, .stats-bar, .filters, .table-wrap { padding-left: 16px; padding-right: 16px; }
+            .search-box { width: 100%; margin-left: 0; }
+            .form-row { grid-template-columns: 1fr; }
+            .modal-body { padding: 16px; }
+        }
+    </style>
+</head>
+<body>
+
+<!-- ===== LOGIN ===== -->
+<div id="login-page">
+    <div class="login-card">
+        <div class="login-logo">
+            <span class="icon">🏥</span>
+            <h1>Suivi des Ascenseurs</h1>
+            <p>Centre Hospitalier</p>
+        </div>
+
+        <!-- Onglets -->
+        <div class="login-tabs">
+            <button class="login-tab active" onclick="switchTab('agent', this)">👷 Agent SSIAP</button>
+            <button class="login-tab" onclick="switchTab('hierarchie', this)">👔 Hiérarchie</button>
+        </div>
+
+        <!-- Panel Agent -->
+        <div class="tab-panel active" id="tab-agent">
+            <p style="font-size:0.78rem;color:var(--text-muted);margin-bottom:10px">Sélectionnez votre nom :</p>
+            <div class="agent-list" id="agent-list"></div>
+            <div class="login-error" id="agent-error"></div>
+            <input class="login-input" type="password" id="agent-pwd" placeholder="Mot de passe" onkeydown="if(event.key==='Enter') loginAgent()">
+            <button class="login-btn" onclick="loginAgent()">Se connecter</button>
+        </div>
+
+        <!-- Panel Hiérarchie -->
+        <div class="tab-panel" id="tab-hierarchie">
+            <div class="role-grid">
+                <button class="role-btn" onclick="selectRole('Chef de Service', this)">
+                    <span class="role-icon">👔</span>
+                    <span class="role-name">Chef de Service</span>
+                </button>
+                <button class="role-btn" onclick="selectRole('Adjoint', this)">
+                    <span class="role-icon">🤝</span>
+                    <span class="role-name">Adjoint</span>
+                </button>
+                <button class="role-btn" onclick="selectRole('Responsable Atelier', this)" style="grid-column:span 2">
+                    <span class="role-icon">🔧</span>
+                    <span class="role-name">Responsable Atelier</span>
+                </button>
+            </div>
+            <div class="login-error" id="hier-error"></div>
+            <input class="login-input" type="password" id="hier-pwd" placeholder="Mot de passe" onkeydown="if(event.key==='Enter') loginHierarchie()">
+            <button class="login-btn" onclick="loginHierarchie()">Se connecter</button>
+        </div>
+    </div>
+</div>
+
+<!-- ===== APP ===== -->
+<div id="app">
+    <header>
+        <div class="header-left">
+            <h1>🏥 Suivi des Ascenseurs — Centre Hospitalier</h1>
+            <p id="last-update"></p>
+        </div>
+        <div class="header-right">
+            <span class="user-badge" id="user-badge"></span>
+            <button class="logout-btn" onclick="logout()">Déconnexion</button>
+        </div>
+    </header>
+    <div class="stats-bar" id="stats-bar"></div>
+    <div class="filters">
+        <span class="filter-label">Filtrer :</span>
+        <button class="filter-btn active" onclick="setFilter('tous',this)">Tous</button>
+        <button class="filter-btn" onclick="setFilter('en-service',this)">En service</button>
+        <button class="filter-btn" onclick="setFilter('arret',this)">Arrêt</button>
+        <button class="filter-btn" onclick="setFilter('prestataire',this)">Appel prestataire</button>
+        <button class="filter-btn" onclick="setFilter('piece',this)">Pièce en commande</button>
+        <input class="search-box" type="text" placeholder="🔍 Rechercher…" oninput="setSearch(this.value)">
+    </div>
+    <div class="table-wrap">
+        <table>
+            <thead>
+                <tr>
+                    <th>Appareil</th><th>Réf.</th><th>Bâtiment</th><th>Dernière date</th>
+                    <th>État</th><th>Pièce cmd.</th><th>Réglage</th><th>Précisions</th>
+                </tr>
+            </thead>
+            <tbody id="tbody"></tbody>
+        </table>
+        <div class="no-result" id="no-result" style="display:none">Aucun résultat trouvé.</div>
+    </div>
+</div>
+
+<!-- ===== MODAL ===== -->
+<div class="modal-overlay" id="modal" style="display:none" onclick="closeModalOutside(event)">
+    <div class="modal">
+        <div class="modal-header">
+            <div>
+                <h2 id="modal-title"></h2>
+                <p id="modal-subtitle"></p>
+            </div>
+            <button class="modal-close" onclick="closeModal()">✕</button>
+        </div>
+        <div class="modal-body">
+            <div class="history-title">📋 Historique des suivis</div>
+            <div id="modal-history"></div>
+            <div id="modal-form"></div>
+        </div>
+    </div>
+</div>
+
+<script>
+// ============================================================
+// AGENTS
+// ============================================================
+const agents = [
+    "Behague Jean-Christophe", "Bricaud Nicolas", "Bruzzi Florian",
+    "Capuano Stéphane", "Cornu Julie", "D'Agostino Angelo",
+    "Duran Franck", "Gaulier Sarah", "Hakimi Amir",
+    "Kacem Malik", "Kobler Thierry", "Maire Brice",
+    "Mocquais Nicolas", "Pierini Manon", "Pons Christophe",
+    "Rennou Sandrine", "Rousseau Julien", "Saldo Christian",
+    "Thonnon Cyril", "Volo Gilbert"
+];
+
+// Remplir la liste agents
+const agentList = document.getElementById('agent-list');
+agents.forEach(name => {
+    const div = document.createElement('div');
+    div.className = 'agent-item';
+    const initials = name.split(' ').map(w => w[0]).join('').slice(0,2).toUpperCase();
+    div.innerHTML = `<div class="agent-avatar">${initials}</div><span>${name}</span>`;
+    div.onclick = () => {
+        document.querySelectorAll('.agent-item').forEach(i => i.classList.remove('selected'));
+        div.classList.add('selected');
+        selectedAgent = name;
+    };
+    agentList.appendChild(div);
+});
+
+// ============================================================
+// AUTH
+// ============================================================
+let currentUser = null;
+let selectedAgent = null;
+let selectedRole = null;
+const PWD = '06600';
+
+function switchTab(tab, btn) {
+    document.querySelectorAll('.login-tab').forEach(t => t.classList.remove('active'));
+    document.querySelectorAll('.tab-panel').forEach(p => p.classList.remove('active'));
+    btn.classList.add('active');
+    document.getElementById('tab-' + tab).classList.add('active');
+}
+
+function selectRole(role, btn) {
+    selectedRole = role;
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+    btn.classList.add('selected');
+}
+
+function showErr(id, msg) {
+    const el = document.getElementById(id);
+    el.textContent = '❌ ' + msg;
+    el.style.display = 'block';
+    setTimeout(() => el.style.display = 'none', 3000);
+}
+
+function loginAgent() {
+    if (!selectedAgent) { showErr('agent-error', 'Veuillez sélectionner votre nom'); return; }
+    if (document.getElementById('agent-pwd').value !== PWD) { showErr('agent-error', 'Mot de passe incorrect'); return; }
+    currentUser = { role: 'Agent SSIAP', name: selectedAgent, icon: '👷', canEdit: true };
+    showApp();
+}
+
+function loginHierarchie() {
+    if (!selectedRole) { showErr('hier-error', 'Veuillez sélectionner un rôle'); return; }
+    if (document.getElementById('hier-pwd').value !== PWD) { showErr('hier-error', 'Mot de passe incorrect'); return; }
+    currentUser = {
+        role: selectedRole, name: selectedRole,
+        icon: selectedRole === 'Chef de Service' ? '👔' : selectedRole === 'Adjoint' ? '🤝' : '🔧',
+        canEdit: false
+    };
+    showApp();
+}
+
+function showApp() {
+    document.getElementById('login-page').style.display = 'none';
+    document.getElementById('app').style.display = 'block';
+    document.getElementById('user-badge').textContent = currentUser.icon + ' ' + currentUser.name;
+    renderStats(); render();
+    const now = new Date();
+    document.getElementById('last-update').textContent =
+        'Mis à jour : ' + now.toLocaleDateString('fr-FR', { weekday:'long', day:'numeric', month:'long', year:'numeric', hour:'2-digit', minute:'2-digit' });
+}
+
+function logout() {
+    currentUser = null; selectedAgent = null; selectedRole = null;
+    document.getElementById('login-page').style.display = 'flex';
+    document.getElementById('app').style.display = 'none';
+    document.getElementById('agent-pwd').value = '';
+    document.getElementById('hier-pwd').value = '';
+    document.querySelectorAll('.agent-item').forEach(i => i.classList.remove('selected'));
+    document.querySelectorAll('.role-btn').forEach(b => b.classList.remove('selected'));
+}
+
+// ============================================================
+// DONNÉES
+// ============================================================
+const ascenseurs = [
+    { appareil:"Ascenseur A (grand)",  ref:"IPH56", batiment:"Psychiatrie",      date:"12 mars, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"",
+      historique:[
+        { agent:"Rennou Sandrine",   date:"30 nov., 2025",  heure:"11h31", etat:"arret",       precision:"Travaux prévu à partir de 2026, information de M.Vercellone, début des travaux le 22/01/2026" },
+        { agent:"Pierini Manon",     date:"22 janv., 2026", heure:"8h44",  etat:"technicien",  precision:"Arrivée du technicien" },
+        { agent:"Pons Christophe",   date:"29 janv., 2026", heure:"17h39", etat:"en-service",  precision:"" },
+        { agent:"Comet",             date:"3 fév., 2026",   heure:"16h16", etat:"arret",       precision:"Chantier de rénovation en cours, au moins encore deux semaines" },
+        { agent:"Pons Christophe",   date:"27 fév., 2026",  heure:"13h26", etat:"en-service",  precision:"" },
+        { agent:"Pons Christophe",   date:"3 mars, 2026",   heure:"7h34",  etat:"prestataire", precision:"R+3 ouvert" },
+        { agent:"Pons Christophe",   date:"3 mars, 2026",   heure:"10h45", etat:"en-service",  precision:"" },
+        { agent:"Mocquais Nicolas",  date:"12 mars, 2026",  heure:"10h39", etat:"prestataire", precision:"Barillet porte palière niv 3 à changer" },
+        { agent:"Mocquais Nicolas",  date:"12 mars, 2026",  heure:"12h33", etat:"en-service",  precision:"" },
+      ]
+    },
+    { appareil:"Ascenseur A1",         ref:"IPH57", batiment:"Action 1",          date:"14 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur A2",         ref:"IPH58", batiment:"Action 2",          date:"26 déc., 2025",   etat:"en-service",  piece:"Oui", reglage:"",    precision:"Fonctionne, mais bouton en commande (plastron)", historique:[] },
+    { appareil:"Ascenseur B (petit)",  ref:"IPH59", batiment:"Psychiatrie",       date:"8 avril, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur C",          ref:"IPH60", batiment:"Psychiatrie",       date:"20 avril, 2026",  etat:"en-service",  piece:"Non", reglage:"Non", precision:"Agent SSIAP à récupérer les clefs", historique:[] },
+    { appareil:"Ascenseur D",          ref:"IPH61", batiment:"Direction",         date:"8 avril, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur E",          ref:"IPH62", batiment:"Ex.MG2",            date:"5 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur F",          ref:"IPH63", batiment:"Ex.MG2",            date:"7 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur G",          ref:"IPH64", batiment:"Ouest",             date:"3 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur H",          ref:"IPH65", batiment:"Plateau technique", date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur I",          ref:"IPH66", batiment:"Phase 200",         date:"26 mai, 2025",    etat:"en-service",  piece:"",    reglage:"",    precision:"Référencé en service sur le site eOtisline", historique:[] },
+    { appareil:"Ascenseur J",          ref:"IPH67", batiment:"Phase 200",         date:"29 août, 2025",   etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur K",          ref:"IPH68", batiment:"Plateau technique", date:"13 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur L",          ref:"IPH69", batiment:"Plateau technique", date:"19 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"Asc bloqué porte ouverte niv 1", historique:[] },
+    { appareil:"Ascenseur M",          ref:"IPH70", batiment:"Plateau technique", date:"2 avril, 2026",   etat:"arret",       piece:"",    reglage:"Oui", precision:"Fin des travaux ce jour. Vu avec M. Dufau", historique:[] },
+    { appareil:"Ascenseur N",          ref:"IPH71", batiment:"Plateau technique", date:"13 fév., 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur O",          ref:"IPH72", batiment:"Phase 200",         date:"21 fév., 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"Actualisation avec le technicien. Aucune pièce en commande.", historique:[] },
+    { appareil:"Ascenseur P",          ref:"IPH73", batiment:"Phase 200",         date:"13 janv., 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"ok", historique:[] },
+    { appareil:"Ascenseur Q (grand)",  ref:"IPH74", batiment:"Action 2",          date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur R (petit)",  ref:"IPH75", batiment:"Action 2",          date:"30 déc., 2025",   etat:"en-service",  piece:"Oui", reglage:"",    precision:"Bouton pallier remit, manque l'anneau de fixation", historique:[] },
+    { appareil:"Ascenseur T",          ref:"IPH77", batiment:"Phase 100",         date:"2 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur V",          ref:"IPH79", batiment:"Phase 100",         date:"19 avril, 2026",  etat:"arret",       piece:"Oui", reglage:"Oui", precision:"Courroie à changer", historique:[] },
+    { appareil:"Ascenseur W",          ref:"IPH80", batiment:"Phase 100",         date:"5 mars, 2026",    etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur X",          ref:"IPH81", batiment:"Plateau technique", date:"31 janv., 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"Coulisseaux sous cabine graissé", historique:[] },
+    { appareil:"Ascenseur Y",          ref:"IPH82", batiment:"Phase 200",         date:"20 août, 2025",   etat:"en-service",  piece:"",    reglage:"",    precision:"Synthèse vocale désactivée", historique:[] },
+    { appareil:"Ascenseur Z",          ref:"IPH83", batiment:"Reposoir",          date:"28 juil., 2025",  etat:"en-service",  piece:"",    reglage:"",    precision:"Offre en cours pour remplacement 4 contacts à clefs", historique:[] },
+    { appareil:"Ascenseur 4",          ref:"IPH51", batiment:"EHPAD BLF",         date:"17 avril, 2026",  etat:"arret",       piece:"",    reglage:"",    precision:"Carte en commande", historique:[] },
+    { appareil:"Ascenseur 5",          ref:"IPH52", batiment:"EHPAD BLF",         date:"13 avril, 2026",  etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur 6",          ref:"IPH53", batiment:"EHPAD BLF",         date:"18 mars, 2026",   etat:"en-service",  piece:"Oui", reglage:"Oui", precision:"En attente de Koné", historique:[] },
+    { appareil:"Ascenseur 7",          ref:"IPH54", batiment:"USP",               date:"19 fév., 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"Remis en service", historique:[] },
+    { appareil:"Ascenseur 8",          ref:"IPH55", batiment:"USP",               date:"12 janv., 2026",  etat:"en-service",  piece:"Oui", reglage:"",    precision:"Devis en cours pour lumière intérieure", historique:[] },
+    { appareil:"Ascenseur 2 (grand)",  ref:"IPH49", batiment:"EHPAD Thiers",      date:"22 mars, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Ascenseur 3 (petit)",  ref:"IPH50", batiment:"EHPAD Thiers",      date:"3 avril, 2026",   etat:"prestataire", piece:"",    reglage:"",    precision:"Patiente retrouvée encore au -1 sous-sol", historique:[] },
+    { appareil:"Monte-Charge 1",       ref:"IPH48", batiment:"EHPAD Thiers",      date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Monte-Charge S",       ref:"IPH76", batiment:"Psychiatrie",       date:"",                etat:"en-service",  piece:"",    reglage:"",    precision:"", historique:[] },
+    { appareil:"Monte-Charge U",       ref:"IPH78", batiment:"Phase 100",         date:"18 mars, 2026",   etat:"en-service",  piece:"",    reglage:"",    precision:"Erreur appareil en service", historique:[] },
+    { appareil:"Ascenseur IP2",        ref:"44836647", batiment:"IP2",            date:"17 déc., 2024",   etat:"en-service",  piece:"",    reglage:"",    precision:"⚠️ Sous garantie Koné jusqu'en janvier 2027", historique:[] },
+];
+
+// ============================================================
+// TABLEAU
+// ============================================================
+let currentFilter = 'tous';
+let currentSearch = '';
+
+function setFilter(f, btn) {
+    currentFilter = f;
+    document.querySelectorAll('.filter-btn').forEach(b => b.classList.remove('active'));
+    btn.classList.add('active');
+    render();
+}
+function setSearch(v) { currentSearch = v.toLowerCase(); render(); }
+
+function getFilteredData() {
+    return ascenseurs.filter(a => {
+        const mf = currentFilter === 'tous' ? true :
+            currentFilter === 'en-service'  ? a.etat === 'en-service' :
+            currentFilter === 'arret'       ? a.etat === 'arret' :
+            currentFilter === 'prestataire' ? a.etat === 'prestataire' :
+            currentFilter === 'piece'       ? a.piece === 'Oui' : true;
+        const ms = currentSearch === '' ? true :
+            a.appareil.toLowerCase().includes(currentSearch) ||
+            a.ref.toLowerCase().includes(currentSearch) ||
+            a.batiment.toLowerCase().includes(currentSearch) ||
+            a.precision.toLowerCase().includes(currentSearch);
+        return mf && ms;
+    });
+}
+
+function badgeHtml(etat) {
+    const map = {
+        'en-service':  ['badge-green',  'En service'],
+        'arret':       ['badge-red',    "Laissé à l'arrêt"],
+        'prestataire': ['badge-orange', 'Appel prestataire'],
+        'technicien':  ['badge-blue',   'Arrivée technicien'],
+    };
+    const [cls, label] = map[etat] || ['badge-orange', etat];
+    return `<span class="badge ${cls}"><span class="dot"></span>${label}</span>`;
+}
+
+function render() {
+    const data = getFilteredData();
+    const tbody = document.getElementById('tbody');
+    const noResult = document.getElementById('no-result');
+    if (data.length === 0) { tbody.innerHTML = ''; noResult.style.display = 'block'; return; }
+    noResult.style.display = 'none';
+    tbody.innerHTML = data.map(a => `
+        <tr onclick="openModal('${a.ref}')">
+            <td class="td-appareil">${a.appareil}</td>
+            <td class="td-ref">${a.ref}</td>
+            <td>${a.batiment}</td>
+            <td class="td-date">${a.date || '—'}</td>
+            <td>${badgeHtml(a.etat)}</td>
+            <td>${a.piece === 'Oui' ? '<span class="tag-oui">Oui</span>' : a.piece === 'Non' ? '<span style="color:var(--text-muted);font-size:0.75rem">Non</span>' : '—'}</td>
+            <td>${a.reglage === 'Oui' ? '<span class="tag-oui">Oui</span>' : a.reglage === 'Non' ? '<span style="color:var(--text-muted);font-size:0.75rem">Non</span>' : '—'}</td>
+            <td class="td-precision">${a.precision || ''}</td>
+        </tr>
+    `).join('');
+}
+
+function renderStats() {
+    const es = ascenseurs.filter(a => a.etat === 'en-service').length;
+    const ar = ascenseurs.filter(a => a.etat === 'arret').length;
+    const pr = ascenseurs.filter(a => a.etat === 'prestataire').length;
+    const pc = ascenseurs.filter(a => a.piece === 'Oui').length;
+    document.getElementById('stats-bar').innerHTML = `
+        <span class="stat-pill s-green"><span class="dot"></span>En service : <strong>${es}</strong></span>
+        <span class="stat-pill s-red"><span class="dot"></span>À l'arrêt : <strong>${ar}</strong></span>
+        <span class="stat-pill s-orange"><span class="dot"></span>Appel prestataire : <strong>${pr}</strong></span>
+        <span class="stat-pill s-yellow"><span class="dot"></span>Pièce en commande : <strong>${pc}</strong></span>
+        <span style="margin-left:auto;font-size:0.78rem;color:var(--text-muted);align-self:center">${ascenseurs.length} appareils</span>
+    `;
+}
+
+// ============================================================
+// MODAL
+// ============================================================
+let currentAsc = null;
+
+function openModal(ref) {
+    currentAsc = ascenseurs.find(a => a.ref === ref);
+    if (!currentAsc) return;
+    document.getElementById('modal-title').textContent = currentAsc.appareil + ' — ' + currentAsc.ref;
+    document.getElementById('modal-subtitle').innerHTML = `${currentAsc.batiment} &nbsp;·&nbsp; ${badgeHtml(currentAsc.etat)}`;
+    renderHistory();
+
+    const formDiv = document.getElementById('modal-form');
+    if (currentUser && currentUser.canEdit) {
+        formDiv.innerHTML = `
+            <div class="add-form">
+                <div class="add-form-title">➕ Actualiser l'état</div>
+                <div style="background:var(--accent-light);border:1px solid #c7d2fe;border-radius:8px;padding:8px 12px;margin-bottom:12px;font-size:0.82rem;color:var(--accent)">
+                    👷 Saisie réalisée par <strong>${currentUser.name}</strong>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>État</label>
+                        <select class="form-select" id="f-etat">
+                            <option value="en-service">En service</option>
+                            <option value="arret">Laissé à l'arrêt</option>
+                            <option value="prestataire">Appel prestataire</option>
+                            <option value="technicien">Arrivée technicien</option>
+                        </select>
+                    </div>
+                    <div class="form-group">
+                        <label>Pièce en commande</label>
+                        <select class="form-select" id="f-piece">
+                            <option value="">—</option>
+                            <option value="Oui">Oui</option>
+                            <option value="Non">Non</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-row">
+                    <div class="form-group">
+                        <label>Réglage à faire</label>
+                        <select class="form-select" id="f-reglage">
+                            <option value="">—</option>
+                            <option value="Oui">Oui</option>
+                            <option value="Non">Non</option>
+                        </select>
+                    </div>
+                </div>
+                <div class="form-group" style="margin-bottom:10px">
+                    <label>Précisions</label>
+                    <textarea class="form-textarea" id="f-precision" placeholder="Description de la situation…"></textarea>
+                </div>
+                <button class="form-submit" onclick="addIntervention()">✅ Valider la mise à jour</button>
+            </div>
+        `;
+    } else {
+        formDiv.innerHTML = `
+            <div class="readonly-notice">
+                👁️ Accès <strong>${currentUser.role}</strong> — Consultation uniquement
+            </div>
+        `;
+    }
+    document.getElementById('modal').style.display = 'flex';
+}
+
+function renderHistory() {
+    const hist = currentAsc.historique;
+    const div = document.getElementById('modal-history');
+    if (hist.length === 0) {
+        div.innerHTML = '<p style="font-size:0.82rem;color:var(--text-muted);padding:8px 0 16px">Aucun suivi enregistré.</p>';
+        return;
+    }
+    const dotColor = { 'en-service':'green', 'arret':'red', 'prestataire':'orange', 'technicien':'blue' };
+    div.innerHTML = [...hist].reverse().map(h => `
+        <div class="history-item">
+            <div class="history-dot ${dotColor[h.etat] || 'orange'}"></div>
+            <div class="history-info">
+                <div class="agent">${h.agent} ${badgeHtml(h.etat)}</div>
+                ${h.precision ? `<div class="precision">${h.precision}</div>` : ''}
+            </div>
+            <div class="history-meta">
+                <div class="date">${h.date}</div>
+                <div class="heure">${h.heure}</div>
+            </div>
+        </div>
+    `).join('');
+}
+
+function addIntervention() {
+    const etat = document.getElementById('f-etat').value;
+    const precision = document.getElementById('f-precision').value.trim();
+    const piece = document.getElementById('f-piece').value;
+    const reglage = document.getElementById('f-reglage').value;
+
+    const now = new Date();
+    const date = now.toLocaleDateString('fr-FR', { day:'numeric', month:'short', year:'numeric' });
+    const heure = now.toLocaleTimeString('fr-FR', { hour:'2-digit', minute:'2-digit' });
+
+    currentAsc.historique.push({ agent: currentUser.name, date, heure, etat, precision });
+    currentAsc.etat = etat;
+    if (piece) currentAsc.piece = piece;
+    if (reglage) currentAsc.reglage = reglage;
+    currentAsc.date = date;
+    if (precision) currentAsc.precision = precision;
+
+    renderHistory();
+    renderStats();
+    render();
+
+    document.getElementById('f-precision').value = '';
+    document.getElementById('f-piece').value = '';
+    document.getElementById('f-reglage').value = '';
+}
+
+function closeModal() { document.getElementById('modal').style.display = 'none'; }
+function closeModalOutside(e) { if (e.target === document.getElementById('modal')) closeModal(); }
+</script>
+</body>
+</html>
